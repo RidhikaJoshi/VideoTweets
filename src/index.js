@@ -1,4 +1,5 @@
-// require("dotenv").config({ path: "./env" }); // it does not maintain consistency for import statement
+// require("dotenv").config({ path: "./env" });
+// it does not maintain consistency for import statement
 
 import dotenv from "dotenv";
 import connectDB from "./db/index.js";
