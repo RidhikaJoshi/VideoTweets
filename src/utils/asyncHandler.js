@@ -13,7 +13,7 @@ const asyncHandler = (fn) => async (res, req, next) => {
 
 /*
 const asyncHandler = (fn) => {
-  (req, res, next) => {
+  return (req, res, next) => {
     Promise.resolve(fn(req, res, next)).catch(next);
   };
 }; // higher order function
