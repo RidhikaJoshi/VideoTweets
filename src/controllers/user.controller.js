@@ -113,10 +113,11 @@ const loginUser = asyncHandler(async (req, res) => {
   // send response to frontend
 
   const { username, email, password } = req.body;
-  if (username === "" && email === "") {
+  // console.log("req.body", req.body);
+  if (!username && !email) {
     throw new ApiError(400, "Username or email is required");
   }
-  if (password === "") {
+  if (!password) {
     throw new ApiError(400, "Password is required");
   }
   const user = await User.findOne({

@@ -1,8 +1,9 @@
 import { Router } from "express";
 import { registerUser } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
-import { loginUser } from "../controllers/auth.controller.js";
+import { loginUser } from "../controllers/user.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { logoutUser } from "../controllers/user.controller.js";
 
 const router = Router(); // this method is used to create a new router object
 
