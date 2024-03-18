@@ -126,38 +126,39 @@ const loginUser = asyncHandler(async (req, res) => {
     throw new ApiError(404, "User does not exist in the database");
   }
   if (await user.isPasswordCorrect(password)) {
+    // if password is correct then geberate access token and refresh token
+    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
+      user._id
+    );
+
+    const loggedInUser = await User.findById(user._id).select(
+      "-password -refreshToken"
+    );
+
+    const options = {
+      httpOnly: true, //The httpOnly property is set to true, which means that the cookie can only be accessed by the server.
+      secure: true, // The secure property is also set to true, which means that the cookie will only be sent over secure (HTTPS) connections.
+    };
+
+    return res
+      .status(200)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", refreshToken, options)
+      .json(
+        new ApiResponse(
+          200, // status code
+          {
+            // data
+            user: loggedInUser,
+            accessToken,
+            refreshToken,
+          },
+          "User Logged In Successfully" // message
+        )
+      );
   } else {
     throw new ApiError(400, "Entered password is incorrect");
   }
-  const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
-    user._id
-  );
-
-  const loggedInUser = await User.findById(user._id).select(
-    "-password -refreshToken"
-  );
-
-  const options = {
-    httpOnly: true,
-    secure: true,
-  };
-
-  return res
-    .status(200)
-    .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", refreshToken, options)
-    .json(
-      new ApiResponse(
-        200, // status code
-        {
-          // data
-          user: loggedInUser,
-          accessToken,
-          refreshToken,
-        },
-        "User Logged In Successfully" // message
-      )
-    );
 });
 
 const logoutUser = asyncHandler(async (req, res) => {
