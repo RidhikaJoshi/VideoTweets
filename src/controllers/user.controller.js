@@ -192,10 +192,12 @@ const logoutUser = asyncHandler(async (req, res) => {
 const refreshAccessToken = asyncHandler(async (req, res) => {
   const incomingRefreshToken =
     req.cookies.refreshToken || req.body.refreshToken;
+  //console.log("incomingRefreshToken", incomingRefreshToken);
   if (!incomingRefreshToken) {
     throw new ApiError(400, "Refresh Token is required");
   }
   try {
+    // firstly verify whether the incoming refresh token is correct or not
     const decodedToken = jwt.verify(
       incomingRefreshToken,
       process.env.REFRESH_TOKEN_SECRET
@@ -211,8 +213,8 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       await generateAccessAndRefreshTokens(user._id);
 
     const options = {
-      httpOnly: true,
-      secure: true,
+      httpOnly: true, // only server can change the cookies
+      secure: true, // https request only
     };
     return res
       .status(200)
