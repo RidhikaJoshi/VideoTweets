@@ -236,4 +236,135 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   }
 });
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken };
+const changeCurrentPassword = asyncHandler(async (req, res) => {
+  // take current password and new password from the frontend
+  // check if the current password matches with the password stored in dtatabase
+  // if correct then bcrypt the new password(already done in .pre method before saving) and update the password in the database
+
+  const { currentPassword, newPassword } = req.body;
+  const userId = req.user._id;
+  const user = await User.findById(userId);
+  if (await user.isPasswordCorrect(currentPassword)) {
+    user.password = newPassword;
+    const modifiedUser = await user.save({ validateBeforeSave: false });
+    // pre method is used to encrypt the password before saving it to the database
+    if (!modifiedUser) {
+      throw new ApiError(500, "Internal Server Error");
+    }
+    return res
+      .status(200)
+      .json(new ApiResponse(200, {}, "Password Changed Successfully"));
+  } else {
+    throw new ApiError(400, "Entered current password is wrong");
+  }
+});
+
+const getCurrentUser = asyncHandler(async (req, res) => {
+  // middleware verifyJWT is already checking for loggedIn USer and  it injects req.user
+
+  const user = req.user;
+  return res.status(200).json(200, user, "User Details Fetched Successfully");
+});
+
+const updateAccountDetails = asyncHandler(async (req, res) => {
+  const { fullName } = req.body;
+  if (fullName !== "") {
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user._id,
+      {
+        $set: {
+          fullName,
+        },
+      },
+      {
+        new: true,
+      }
+    ).select("-password -refreshToken");
+    if (!updatedUser) {
+      throw new ApiError(500, "Internal Server Error");
+    }
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(200, updatedUser, "User Details Updated Successfully")
+      );
+  } else {
+    throw new ApiError(400, "Fullname is required");
+  }
+});
+
+const updateUserAvatar = asyncHandler(async (req, res) => {
+  const avatarLocalPath = req.file?.path;
+  if (!avatarLocalPath) {
+    throw new ApiError(400, "Avatar file is required");
+  }
+  const avatar = await uploadOnCloudinary(avatarLocalPath);
+  if (!avatar) {
+    throw new ApiError(
+      500,
+      "Internal Server Error while uploading Avatar on cloudinary"
+    );
+  }
+  const updatedUser = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        avatar: avatar.url,
+      },
+    },
+    {
+      new: true,
+    }
+  ).select("-password -refreshToken");
+
+  if (!updatedUser) {
+    throw new ApiError(500, "Internal Server Error while updating Avatar");
+  }
+  return res
+    .status(200)
+    .json(new ApiResponse(200, updatedUser, "Avatar Updated Successfully"));
+});
+
+const updateUserCoverImage = asyncHandler(async (req, res) => {
+  const coverImageLocalPath = req.file?.path;
+  if (!coverImageLocalPath) {
+    throw new ApiError(400, "CoverImage is required");
+  }
+  const coverImage = await uploadOnCloudinary(coverImageLocalPath);
+  if (!coverImage) {
+    throw new ApiError(
+      500,
+      "Internal Server Error while uploading CoverImage on cloudinary"
+    );
+  }
+  const updatedUser = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        coverImage: coverImage.url,
+      },
+    },
+    {
+      new: true,
+    }
+  ).select("-password -refreshToken");
+
+  if (!updatedUser) {
+    throw new ApiError(500, "Internal Server Error while updating CoverImage");
+  }
+  return res
+    .status(200)
+    .json(new ApiResponse(200, updatedUser, "CoverImage Updated Successfully"));
+});
+
+export {
+  registerUser,
+  loginUser,
+  logoutUser,
+  refreshAccessToken,
+  changeCurrentPassword,
+  getCurrentUser,
+  updateAccountDetails,
+  updateUserAvatar,
+  updateUserCoverImage,
+};
