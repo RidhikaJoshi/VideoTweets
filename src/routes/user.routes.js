@@ -1,16 +1,16 @@
 import { Router } from "express";
-import { registerUser } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
-import { loginUser } from "../controllers/user.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
-import { logoutUser } from "../controllers/user.controller.js";
-import { refreshAccessToken } from "../controllers/user.controller.js";
-import { changeCurrentPassword } from "../controllers/user.controller.js";
 import {
   getCurrentUser,
   updateAccountDetails,
   updateUserAvatar,
   updateUserCoverImage,
+  changeCurrentPassword,
+  refreshAccessToken,
+  logoutUser,
+  loginUser,
+  registerUser,
 } from "../controllers/user.controller.js";
 
 const router = Router(); // this method is used to create a new router object
