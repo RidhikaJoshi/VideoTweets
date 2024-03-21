@@ -263,7 +263,9 @@ const getCurrentUser = asyncHandler(async (req, res) => {
   // middleware verifyJWT is already checking for loggedIn USer and  it injects req.user
 
   const user = req.user;
-  return res.status(200).json(200, user, "User Details Fetched Successfully");
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "User Details Fetched Successfully"));
 });
 
 const updateAccountDetails = asyncHandler(async (req, res) => {
