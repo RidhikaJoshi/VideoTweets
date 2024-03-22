@@ -369,20 +369,23 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
   const channel = await User.aggregate([
     {
       $match: {
+        // match is used to filter the data based on the given condition
         username: username?.toLowerCase(),
       },
     },
     {
       $lookup: {
-        from: "subcriptions",
+        // lookup is used to join the collections
+        from: "subcriptions", // name of table
         localField: "_id",
         foreignField: "channel",
-        as: "subscribers",
+        as: "subscribers", // it is used to store the data of the subscribers
       },
     },
     {
       $lookup: {
-        from: "subcriptions",
+        // lookup is used to join the collections
+        from: "subcriptions", // name of table
         localField: "_id",
         foreignField: "subscriber",
         as: "subscribedTo",
@@ -394,6 +397,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         channelsSubscribedToCount: { $size: "$subscribedTo" },
         isSubscribed: {
           $cond: {
+            // it is used to check the condition
             if: { $in: [req.user?._id, "$subscribers.subscriber"] },
             then: true,
             else: false,
@@ -403,6 +407,8 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     },
     {
       $project: {
+        // used to project the fields
+        // 1 means include and 0 means exclude
         fullName: 1,
         username: 1,
         avatar: 1,
