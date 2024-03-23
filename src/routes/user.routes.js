@@ -11,7 +11,10 @@ import {
   logoutUser,
   loginUser,
   registerUser,
+  getUserChannelProfile,
+  getWatchHistory,
 } from "../controllers/user.controller.js";
+import { verify } from "jsonwebtoken";
 
 const router = Router(); // this method is used to create a new router object
 
@@ -36,13 +39,17 @@ router.route("/logout").post(verifyJWT, logoutUser);
 router.route("/refreshAccessToken").post(refreshAccessToken);
 router.route("/changeCurrentPassword").post(verifyJWT, changeCurrentPassword);
 router.route("/getCurrentUser").get(verifyJWT, getCurrentUser);
-router.route("/updateAccountDetails").post(verifyJWT, updateAccountDetails);
+router.route("/updateAccountDetails").patch(verifyJWT, updateAccountDetails);
 router
-  .route("/ updateUserAvatar")
-  .post(verifyJWT, upload.single("avatar"), updateUserAvatar);
+  .route("/updateUserAvatar")
+  .patch(verifyJWT, upload.single("avatar"), updateUserAvatar);
 
 router
   .route("/updateUserCoverImage")
-  .post(verifyJWT, upload.single("coverImage"), updateUserCoverImage);
+  .patch(verifyJWT, upload.single("coverImage"), updateUserCoverImage);
+
+router.route("/c/:username").get(verifyJWT, getUserChannelProfile); // because taking username from params
+
+router.route("/watchHistory").get(verifyJWT, getWatchHistory);
 
 export default router;
