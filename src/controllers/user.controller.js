@@ -4,6 +4,7 @@ import { User } from "../models/user.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 
 const generateAccessAndRefreshTokens = async (userId) => {
   try {
@@ -36,6 +37,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
   // get user details from frontend
   // res.body is given by express for data fields
+  //console.log("req.body", req.body);
   const { username, fullName, email, password } = req.body;
   //console.log("req.body", req.body);
   // validation - check all fields are filled and correctly filled
@@ -240,7 +242,7 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
   // take current password and new password from the frontend
   // check if the current password matches with the password stored in dtatabase
   // if correct then bcrypt the new password(already done in .pre method before saving) and update the password in the database
-
+  console.log("req.body", req.body);
   const { currentPassword, newPassword } = req.body;
   const userId = req.user._id;
   const user = await User.findById(userId);
@@ -361,31 +363,28 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
 
 const getUserChannelProfile = asyncHandler(async (req, res) => {
   const { username } = req.params;
-  if (!username || !username.trim()) {
+  if (!username?.trim()) {
     throw new ApiError(400, "Username is required");
   }
   //const user= await User.findOne({username:username.toLowerCase()}).select("-password -refreshToken");
-
+  //console.log("username", username);
   const channel = await User.aggregate([
     {
       $match: {
-        // match is used to filter the data based on the given condition
         username: username?.toLowerCase(),
       },
     },
     {
       $lookup: {
-        // lookup is used to join the collections
-        from: "subcriptions", // name of table
+        from: "subscriptions",
         localField: "_id",
         foreignField: "channel",
-        as: "subscribers", // it is used to store the data of the subscribers
+        as: "subscribers",
       },
     },
     {
       $lookup: {
-        // lookup is used to join the collections
-        from: "subcriptions", // name of table
+        from: "subscriptions",
         localField: "_id",
         foreignField: "subscriber",
         as: "subscribedTo",
@@ -393,11 +392,14 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     },
     {
       $addFields: {
-        subscribersCount: { $size: "$subscribers" },
-        channelsSubscribedToCount: { $size: "$subscribedTo" },
+        subscribersCount: {
+          $size: "$subscribers",
+        },
+        channelsSubscribedToCount: {
+          $size: "$subscribedTo",
+        },
         isSubscribed: {
           $cond: {
-            // it is used to check the condition
             if: { $in: [req.user?._id, "$subscribers.subscriber"] },
             then: true,
             else: false,
@@ -407,23 +409,23 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     },
     {
       $project: {
-        // used to project the fields
-        // 1 means include and 0 means exclude
         fullName: 1,
         username: 1,
-        avatar: 1,
-        coverImage: 1,
         subscribersCount: 1,
         channelsSubscribedToCount: 1,
         isSubscribed: 1,
+        avatar: 1,
+        coverImage: 1,
         email: 1,
       },
     },
   ]);
 
-  if (channel?.length) {
+  console.log("channel", channel.length);
+  if (!channel?.length) {
     throw new ApiError(404, "Channel not found");
   }
+
   return res
     .status(200)
     .json(

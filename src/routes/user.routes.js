@@ -14,7 +14,6 @@ import {
   getUserChannelProfile,
   getWatchHistory,
 } from "../controllers/user.controller.js";
-import { verify } from "jsonwebtoken";
 
 const router = Router(); // this method is used to create a new router object
 
@@ -48,7 +47,7 @@ router
   .route("/updateUserCoverImage")
   .patch(verifyJWT, upload.single("coverImage"), updateUserCoverImage);
 
-router.route("/c/:username").get(verifyJWT, getUserChannelProfile); // because taking username from params
+router.route("/channel/:username").get(verifyJWT, getUserChannelProfile); // because taking username from params
 
 router.route("/watchHistory").get(verifyJWT, getWatchHistory);
 
