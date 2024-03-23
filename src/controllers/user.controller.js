@@ -361,7 +361,7 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
 
 const getUserChannelProfile = asyncHandler(async (req, res) => {
   const { username } = req.params;
-  if (!username?.trim) {
+  if (!username || !username.trim()) {
     throw new ApiError(400, "Username is required");
   }
   //const user= await User.findOne({username:username.toLowerCase()}).select("-password -refreshToken");
