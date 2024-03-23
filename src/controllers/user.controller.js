@@ -172,8 +172,8 @@ const logoutUser = asyncHandler(async (req, res) => {
   User.findByIdAndUpdate(
     req.user._id,
     {
-      $set: {
-        refreshToken: undefined,
+      $unset: {
+        refreshToken: 1, // this will remove the refreshToken field from the user
       },
     },
     { new: true }
@@ -421,7 +421,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     },
   ]);
 
-  console.log("channel", channel.length);
+  //console.log("channel", channel.length);
   if (!channel?.length) {
     throw new ApiError(404, "Channel not found");
   }
