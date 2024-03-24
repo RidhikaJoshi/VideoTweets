@@ -27,6 +27,8 @@ app.use(cookieParser()); // this method is used to parse Cookie header and popul
 
 import userRouter from "./routes/user.routes.js";
 import tweetRouter from "./routes/tweet.routes.js";
+import commentRouter from "./routes/comment.routes.js";
+import videoRoutes from "./routes/video.routes.js";
 
 // routes declaration
 // since we have segregated rotes and controllers so we cannot use app.get() method here
@@ -34,8 +36,9 @@ import tweetRouter from "./routes/tweet.routes.js";
 
 app.use("/api/v1/users", userRouter);
 // it is good practice to use versioning and decalring api if creating api  in routes
-
 // url will be https://localhost:8000/api/v1/users/register
+app.use("/api/v1/videos", videoRoutes);
 app.use("/api/v1/tweets", tweetRouter);
+app.use("/api/v1/comments", commentRouter);
 
 export default app;
