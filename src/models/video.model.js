@@ -24,8 +24,8 @@ const videoSchema = new mongoose.Schema(
       required: true,
     },
     duration: {
-      type: Number, // cloudinary gives information about duration of video
-      required: true,
+      type: Number,
+      required: true, // cloudinary gives information about duration of video
     },
     views: {
       type: Number,
