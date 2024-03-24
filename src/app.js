@@ -29,6 +29,7 @@ import userRouter from "./routes/user.routes.js";
 import tweetRouter from "./routes/tweet.routes.js";
 import commentRouter from "./routes/comment.routes.js";
 import videoRoutes from "./routes/video.routes.js";
+import likeRoutes from "./routes/like.routes.js";
 
 // routes declaration
 // since we have segregated rotes and controllers so we cannot use app.get() method here
@@ -40,5 +41,6 @@ app.use("/api/v1/users", userRouter);
 app.use("/api/v1/videos", videoRoutes);
 app.use("/api/v1/tweets", tweetRouter);
 app.use("/api/v1/comments", commentRouter);
+app.use("/api/v1/likes", likeRoutes);
 
 export default app;
