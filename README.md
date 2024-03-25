@@ -1,7 +1,5 @@
 # VideoTweets Backend
 
-Documentation: [Link]( https://documenter.getpostman.com/view/18992770/2sA2xpR8nu)
-
 
 Welcome to the VideoTweets backend repository! This repository contains the backend codebase for VideoTweets, a platform designed for sharing and interacting with videos and tweets.
 
