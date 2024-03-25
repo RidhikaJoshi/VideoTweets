@@ -75,12 +75,13 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Invalid Video Id");
   }
   const playlist = await Playlist.findOne({ _id: playlistId });
-  if (!playlist.videos) {
-    playlist.videos = []; // Initialize videos array if it's undefined
-  }
   if (!playlist) {
     throw new ApiError(400, "Playlist not found in the databse");
   }
+  if (!playlist.videos) {
+    playlist.videos = []; // Initialize videos array if it's undefined
+  }
+
   if (playlist.videos.includes(videoId)) {
     throw new ApiError(400, "Video already exists in the playlist");
   }
@@ -125,7 +126,7 @@ const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
       "Internal Server Error occurred while removing video from the playlist"
     );
   }
-  console.log(videoRemovedFromPlaylist);
+  //console.log(videoRemovedFromPlaylist);
   playlist.videos = videoRemovedFromPlaylist;
   const removedVideo = await playlist.save();
   return res
@@ -138,6 +139,25 @@ const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
 const deletePlaylist = asyncHandler(async (req, res) => {
   const { playlistId } = req.params;
   // TODO: delete playlist
+
+  const validPlaylist = isValidObjectId(playlistId);
+  if (!validPlaylist) {
+    throw new ApiError(400, "Invalid playlist id for deletion of playlist");
+  }
+  const playlistPresent = await Playlist.findById(playlistId);
+  if (!playlistPresent) {
+    throw new ApiError(400, "Playlist is not present in the database");
+  }
+  const removedPlaylist = await Playlist.findByIdAndDelete(playlistId);
+  if (!removedPlaylist) {
+    throw new ApiError(
+      500,
+      "Internal Server error Occurred while deleting the playlist"
+    );
+  }
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Playlist deleted Successfully"));
 });
 
 const updatePlaylist = asyncHandler(async (req, res) => {
