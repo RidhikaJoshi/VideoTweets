@@ -164,6 +164,36 @@ const updatePlaylist = asyncHandler(async (req, res) => {
   const { playlistId } = req.params;
   const { name, description } = req.body;
   //TODO: update playlist
+  const validPlaylist = isValidObjectId(playlistId);
+  if (!validPlaylist) {
+    throw new ApiError(400, "Invalid Playlist Id provided");
+  }
+  if (!name && !description) {
+    throw new ApiError(
+      400,
+      "Either name or description must be provided for updation"
+    );
+  }
+  const playlistPresent = await Playlist.findOne({ _id: playlistId });
+  if (!playlistPresent) {
+    throw new ApiError(400, "Playlist does not exists");
+  }
+  if (name !== "") {
+    playlistPresent.name = name;
+  }
+  if (description !== "") {
+    playlistPresent.description = description;
+  }
+  const newPlaylist = await playlistPresent.save();
+  if (!newPlaylist) {
+    throw new ApiError(
+      500,
+      "Internal Server error occurred while updating playlist"
+    );
+  }
+  return res
+    .status(200)
+    .json(new ApiResponse(200, newPlaylist, "Playlist updated Successfully"));
 });
 
 export {
