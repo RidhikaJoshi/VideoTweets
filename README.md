@@ -51,5 +51,5 @@ To set up the VideoTweets backend locally, follow these steps:
 1. Clone this repository to your local machine.
 2. Install dependencies using `npm install`.
 3. Set up a MongoDB database and configure the connection string in the `.env` file.
-4. Run the backend server using `npm start`.
+4. Run the backend server using `npm run dev`.
 
