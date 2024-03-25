@@ -11,6 +11,7 @@ const createPlaylist = asyncHandler(async (req, res) => {
   const newPlaylist = await Playlist.create({
     name,
     description,
+    owner: req.user._id,
   });
   if (!newPlaylist) {
     throw new ApiError(
@@ -28,6 +29,23 @@ const createPlaylist = asyncHandler(async (req, res) => {
 const getUserPlaylists = asyncHandler(async (req, res) => {
   const { userId } = req.params;
   //TODO: get user playlists
+  // fetching all the playlists of the user
+  const validity = isValidObjectId(userId);
+  if (!validity) {
+    throw new ApiError(400, "Invalid userId");
+  }
+  const allPlaylists = await Playlist.find({ owner: userId });
+  if (!allPlaylists) {
+    throw new ApiError(
+      500,
+      "Internal Server Error occurred while fetching all the playlist of the user"
+    );
+  }
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, allPlaylists, "User Playlists Fetched Successfully")
+    );
 });
 
 const getPlaylistById = asyncHandler(async (req, res) => {
@@ -48,6 +66,35 @@ const getPlaylistById = asyncHandler(async (req, res) => {
 
 const addVideoToPlaylist = asyncHandler(async (req, res) => {
   const { playlistId, videoId } = req.params;
+  const validPlaylist = isValidObjectId(playlistId);
+  if (!validPlaylist) {
+    throw new ApiError(400, "Invalid Playlist Id");
+  }
+  const validVideoId = isValidObjectId(videoId);
+  if (!validVideoId) {
+    throw new ApiError(400, "Invalid Video Id");
+  }
+  const playlist = await Playlist.findOne({ _id: playlistId });
+  if (!playlist.videos) {
+    playlist.videos = []; // Initialize videos array if it's undefined
+  }
+  if (!playlist) {
+    throw new ApiError(400, "Playlist not found in the databse");
+  }
+  if (playlist.videos.includes(videoId)) {
+    throw new ApiError(400, "Video already exists in the playlist");
+  }
+  playlist.videos.push(videoId);
+  const addedVideo = await playlist.save();
+  if (!addedVideo) {
+    throw new ApiError(
+      500,
+      "Internal Server Error occurred while adding videos to the playlist"
+    );
+  }
+  return res
+    .status(200)
+    .json(new ApiResponse(200, addedVideo, "Video Added to the playlist"));
 });
 
 const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
