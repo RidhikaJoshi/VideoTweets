@@ -100,6 +100,39 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
 const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
   const { playlistId, videoId } = req.params;
   // TODO: remove video from playlist
+  const validPlaylist = isValidObjectId(playlistId);
+  const validVideo = isValidObjectId(videoId);
+  if (!validPlaylist) {
+    throw new ApiError(400, "Invalid Playlist Id provided");
+  }
+  if (!validVideo) {
+    throw new ApiError(400, "Invalid VideoId provided");
+  }
+  const playlist = await Playlist.findOne({ _id: playlistId });
+  if (!playlist) {
+    throw new ApiError(400, "Playlist does not exists in the database");
+  }
+  const videoPresentInPlaylist = playlist.videos.includes(videoId);
+  if (!videoPresentInPlaylist) {
+    throw new ApiError(400, "Video does not exists in the Playlist");
+  }
+  const videoRemovedFromPlaylist = playlist.videos.filter(
+    (video) => video != videoId
+  );
+  if (!videoRemovedFromPlaylist) {
+    throw new ApiError(
+      500,
+      "Internal Server Error occurred while removing video from the playlist"
+    );
+  }
+  console.log(videoRemovedFromPlaylist);
+  playlist.videos = videoRemovedFromPlaylist;
+  const removedVideo = await playlist.save();
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, removedVideo, "Video Removed from the Playlist")
+    );
 });
 
 const deletePlaylist = asyncHandler(async (req, res) => {
