@@ -22,7 +22,7 @@ const createTweet = asyncHandler(async (req, res) => {
 
 const getUserTweets = asyncHandler(async (req, res) => {
   // TODO: get user tweets
-  // getting all tweets from a specific user
+  // getting all tweets from a specific user in the form of an array
   const tweetsFromUser = await Tweet.find({
     owner: req.user._id,
   });
