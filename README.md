@@ -33,6 +33,10 @@ The platform provides user authentication and authorization mechanisms to ensure
 
 VideoTweets supports uploading and sharing of videos. Users can upload videos, view videos from other users, like videos, comment on videos, and explore trending videos.
 
+### 7.Subscription
+
+VideoTweets supports subscribing and unsubscribing of channels.
+
 ## Controllers
 
 The backend codebase is organized into separate controllers for different functionalities:
@@ -43,6 +47,7 @@ The backend codebase is organized into separate controllers for different functi
 - `tweet.controller.js`: Manages tweet-related functionalities.
 - `user.controller.js`: Handles user-related functionalities.
 - `video.controller.js`: Manages video-related functionalities.
+- `subscription.controller.js`: Manages subscription-related functionalities.
 
 ## Getting Started
 
