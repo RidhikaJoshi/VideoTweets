@@ -1,4 +1,4 @@
-import mongoose, { isValidObjectId } from "mongoose";
+import { isValidObjectId } from "mongoose";
 import { Like } from "../models/like.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -67,7 +67,9 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
     }
     return res
       .status(200)
-      .json(new ApiResponse(200, newLiked, "Liked added Successfully"));
+      .json(
+        new ApiResponse(200, newLiked, "Liked added on Comment Successfully")
+      );
   } else {
     const removeLike = await Like.deleteOne({
       comment: commentId,

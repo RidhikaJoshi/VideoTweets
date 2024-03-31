@@ -43,7 +43,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
       "Internal Server error occurred while uploading video"
     );
   }
-  console.log(videoCloud);
+  //console.log(videoCloud);
   const newVideo = await Video.create({
     videoFile: videoCloud.url,
     thumbnail: thumbnailCloud.url,
