@@ -211,13 +211,14 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     if (user.refreshToken !== incomingRefreshToken) {
       throw new ApiError(401, "Refresh Token is expired or used");
     }
-    const { accessToken, newrefreshToken } =
+    const { accessToken, refreshToken: newrefreshToken } =
       await generateAccessAndRefreshTokens(user._id);
 
     const options = {
       httpOnly: true, // only server can change the cookies
       secure: true, // https request only
     };
+    //console.log(newrefreshToken);
     return res
       .status(200)
       .cookie("accessToken", accessToken, options)
@@ -227,7 +228,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
           200,
           {
             accessToken,
-            newrefreshToken,
+            refreshToken: newrefreshToken,
           },
           "Access Token Refreshed Successfully"
         )
@@ -242,7 +243,7 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
   // take current password and new password from the frontend
   // check if the current password matches with the password stored in dtatabase
   // if correct then bcrypt the new password(already done in .pre method before saving) and update the password in the database
-  console.log("req.body", req.body);
+  //console.log("req.body", req.body);
   const { currentPassword, newPassword } = req.body;
   const userId = req.user._id;
   const user = await User.findById(userId);
