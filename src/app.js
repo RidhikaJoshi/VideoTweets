@@ -23,6 +23,9 @@ app.use(express.static("public")); // this method is used to serve static files
 
 app.use(cookieParser()); // this method is used to parse Cookie header and populate req.cookies with an object keyed by the cookie names
 
+app.get("/", (req, res) => {
+  res.send("Server Working Fine");
+});
 //routes import
 
 import userRouter from "./routes/user.routes.js";
