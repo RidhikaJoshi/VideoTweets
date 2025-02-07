@@ -1,8 +1,19 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import Valkey from "ioredis";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const app = express();
+//console.log("Redis URL", process.env.REDIS_URL);
+export const valkey = new Valkey(process.env.REDIS_URL);
+valkey.on("error", (err) => {
+  console.error("Redis connection error:", err);
+});
+console.log("Redis Connection Established");
+
 app.use(
   cors({
     origin: process.env.CORS_ORIGIN,
