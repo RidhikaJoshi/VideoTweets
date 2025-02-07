@@ -1,10 +1,10 @@
-import mongoose, { isValidObjectId } from "mongoose";
+import  { isValidObjectId } from "mongoose";
 import { Video } from "../models/video.model.js";
-import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { valkey } from "../app.js";
 
 const getAllVideos = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10 } = req.query;
@@ -65,10 +65,19 @@ const getVideoById = asyncHandler(async (req, res) => {
   if (!validity) {
     throw new ApiError(400, "Invalid Video Request");
   }
+  // checking if video is present in the redis server or not 
+  // if not take it from database
+  const videoCached= await valkey.get(videoId);
+  if(videoCached){
+    console.log("Video fetched from Redis Server");
+    return res.status(200).json(new ApiResponse(200, JSON.parse(videoCached), "Video fetched Successfully"));
+  }
   const video = await Video.findById(videoId);
   if (!video) {
     throw new ApiError(400, "Video does not exists in the database");
   }
+  // setting the video in the redis server
+  await valkey.set(videoId, JSON.stringify(video));
   return res
     .status(200)
     .json(new ApiResponse(200, video, "Video fetched Successfully"));
@@ -85,6 +94,18 @@ const updateVideo = asyncHandler(async (req, res) => {
   const validity = isValidObjectId(videoId);
   if (!validity) {
     throw new ApiError(400, "Invalid Video Id for update request");
+  }
+  // check if video exists in the database
+  const video = await Video.findById(videoId);
+  console.log(video);
+  if (!video) {
+    throw new ApiError(400, "Video does not exists in the database");
+  }
+  // if the video is present in the redis server then delete it
+  // so that the updated video can be set in the redis server
+  const videoInCache = await valkey.get(videoId);
+  if(videoInCache){
+    valkey.del(videoId);
   }
   const updatedVideo = await Video.findByIdAndUpdate(
     videoId,
@@ -104,6 +125,8 @@ const updateVideo = asyncHandler(async (req, res) => {
       "Internal server error occurred while updating video"
     );
   }
+  // setting the updated video in the redis server
+  await valkey.set(videoId, JSON.stringify(updatedVideo));
   return res
     .status(200)
     .json(new ApiResponse(200, updatedVideo, "Video Updated Successfully"));
@@ -119,6 +142,11 @@ const deleteVideo = asyncHandler(async (req, res) => {
   const video = await Video.findById(videoId);
   if (!video) {
     throw new ApiError(400, "Video does not exists in the database");
+  }
+  // del video from cache as well
+  const videoInCache = await valkey.get(videoId);
+  if(videoInCache){
+    valkey.del(videoId);
   }
   const deletedVideo = await Video.findByIdAndDelete(videoId);
   if (!deletedVideo) {
@@ -141,6 +169,12 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
   const video = await Video.findById(videoId);
   if (!video) {
     throw new ApiError(400, "Video does not exists in the database");
+  }
+  // if the video is present in the redis server then delete it
+  // so that the updated video can be set in the redis server
+  const videoInCache = await valkey.get(videoId);
+  if(videoInCache){
+    valkey.del(videoId);
   }
   const updatedIsPublished = !video.isPublished;
   const updatedVideo = await Video.findByIdAndUpdate(
@@ -182,8 +216,15 @@ const updateVideoThumbnail = asyncHandler(async (req, res) => {
   if (!video) {
     throw new ApiError(400, "Video doesnot exists in the database");
   }
+
   if (!req.file) {
     throw new ApiError(400, "thumnail is required");
+  }
+  // if the video is present in the redis server then delete it
+  // so that the updated video can be set in the redis server
+  const videoInCache = await valkey.get(videoId);
+  if(videoInCache){
+    valkey.del(videoId);
   }
   const updateThumbnail = req.file?.path;
   if (!updateThumbnail) {
