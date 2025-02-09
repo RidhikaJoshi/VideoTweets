@@ -3,6 +3,7 @@ import { Comment } from "../models/comment.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { valkey } from "../app.js";
 
 const getVideoComments = asyncHandler(async (req, res) => {
   //TODO: get all comments for a video
@@ -59,6 +60,13 @@ const updateComment = asyncHandler(async (req, res) => {
   if (!validity) {
     throw new ApiError(400, "Invalid Comment Id");
   }
+  // check if the comment is present in the redis server or not
+  // if present delete the comment from the redis server
+  // and update the comment in the database
+  const commentCached= await valkey.get(commentId);
+  if(commentCached){
+    await valkey.del(commentId);
+  }
   const { updateContent } = req.body;
   const comment = await Comment.findById(commentId);
   if (!comment) {
@@ -93,6 +101,13 @@ const deleteComment = asyncHandler(async (req, res) => {
   if (!validity) {
     throw new ApiError(400, "Invalid Comment Id for deleting a comment");
   }
+  // check if the comment is present in the redis server or not
+  // if present delete the comment from the redis server
+  // and delete the comment from the database
+  const commentCached= await valkey.get(commentId);
+  if(commentCached){
+    await valkey.del(commentId);
+  }
   const comment = await Comment.findByIdAndDelete(commentId);
   if (!comment) {
     throw new ApiError(
@@ -105,4 +120,33 @@ const deleteComment = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "Comment Deleted Successfully"));
 });
 
-export { getVideoComments, addComment, updateComment, deleteComment };
+const getCommentById = asyncHandler(async (req, res) => {
+  const { commentId } = req.params;
+  const validity = isValidObjectId(commentId);
+  if (!validity) {
+    throw new ApiError(400, "Invalid Comment Id for fetching a comment");
+  }
+  // check if the comment is present in the redis server or not
+  // if present return the comment from the redis server
+  // else fetch the comment from the database and store it in the redis server
+
+  const commentCached= await valkey.get(commentId);
+  if(commentCached){
+    return res
+    .status(200)
+    .json(new ApiResponse(200, JSON.parse(commentCached), "Comment Fetched Successfully"));
+  }
+
+  const comment = await Comment.findById(commentId);
+  if (!comment) {
+    throw new ApiError(404, "No Comment Found for the given Id");
+  }
+
+  // store the comment in the redis server
+  await valkey.set(commentId, JSON.stringify(comment));
+  return res
+    .status(200)
+    .json(new ApiResponse(200, comment, "Comment Fetched Successfully"));
+});
+
+export { getVideoComments, addComment, updateComment, deleteComment,getCommentById };
