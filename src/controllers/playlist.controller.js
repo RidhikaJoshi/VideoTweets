@@ -1,8 +1,9 @@
-import mongoose, { isValidObjectId } from "mongoose";
+import  { isValidObjectId } from "mongoose";
 import { Playlist } from "../models/playlist.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { valkey } from "../app.js";
 
 const createPlaylist = asyncHandler(async (req, res) => {
   const { name, description } = req.body;
@@ -34,6 +35,21 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
   if (!validity) {
     throw new ApiError(400, "Invalid userId");
   }
+  // check if the user playlist exists in the redis server or not
+  const key = `playlist:${userId}`;
+  const userPlaylists = await valkey.get(key);
+  if (userPlaylists) {
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          JSON.parse(userPlaylists),
+          "User Playlists Fetched Successfully"
+        )
+      );
+  }
+
   const allPlaylists = await Playlist.find({ owner: userId });
   if (!allPlaylists) {
     throw new ApiError(
@@ -41,6 +57,8 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
       "Internal Server Error occurred while fetching all the playlist of the user"
     );
   }
+  // set the user playlist in the redis server
+  await valkey.set(key, JSON.stringify(allPlaylists), "EX", 60);
   return res
     .status(200)
     .json(
@@ -55,10 +73,26 @@ const getPlaylistById = asyncHandler(async (req, res) => {
   if (!validity) {
     throw new ApiError(400, "Invalid Playlist Id provided");
   }
+  // check if playlist exists in the redis server or not
+  const playlistCached = await valkey.get(playlistId);
+  if (playlistCached) {
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          JSON.parse(playlistCached),
+          "Playlist Fetched Successfully"
+        )
+      );  
+    }
+
   const playlist = await Playlist.findById(playlistId);
   if (!playlist) {
     throw new ApiError(400, "No playlist found in the database");
   }
+  // set the playlist in the redis server
+  await valkey.set(playlistId, JSON.stringify(playlist), "EX", 60);
   return res
     .status(200)
     .json(new ApiResponse(200, playlist, "Playlist Fetched Successfully"));
@@ -73,6 +107,11 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
   const validVideoId = isValidObjectId(videoId);
   if (!validVideoId) {
     throw new ApiError(400, "Invalid Video Id");
+  }
+  // if the playlist exists in the redis server, then remove it
+  const playlistCached= await valkey.get(playlistId);
+  if (playlistCached) {
+    await valkey.del(playlistId);
   }
   const playlist = await Playlist.findOne({ _id: playlistId });
   if (!playlist) {
@@ -109,6 +148,11 @@ const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
   if (!validVideo) {
     throw new ApiError(400, "Invalid VideoId provided");
   }
+  // if the playlist exists in the redis server, then remove it
+  const playlistCached = await valkey.get(playlistId);
+  if (playlistCached) {
+    await valkey.del(playlistId);
+  }
   const playlist = await Playlist.findOne({ _id: playlistId });
   if (!playlist) {
     throw new ApiError(400, "Playlist does not exists in the database");
@@ -144,6 +188,11 @@ const deletePlaylist = asyncHandler(async (req, res) => {
   if (!validPlaylist) {
     throw new ApiError(400, "Invalid playlist id for deletion of playlist");
   }
+  // if the playlist exists in the redis server, then remove it
+  const playlistCached = await valkey.get(playlistId);
+  if (playlistCached) {
+    await valkey.del(playlistId);
+  }
   const playlistPresent = await Playlist.findById(playlistId);
   if (!playlistPresent) {
     throw new ApiError(400, "Playlist is not present in the database");
@@ -173,6 +222,11 @@ const updatePlaylist = asyncHandler(async (req, res) => {
       400,
       "Either name or description must be provided for updation"
     );
+  }
+  // check if the playlist exists in the redis server, then remove it
+  const playlistCached = await valkey.get(playlistId);
+  if (playlistCached) {
+    await valkey.del(playlistId);
   }
   const playlistPresent = await Playlist.findOne({ _id: playlistId });
   if (!playlistPresent) {
