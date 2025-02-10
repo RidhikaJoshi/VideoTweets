@@ -3,6 +3,7 @@ import { Like } from "../models/like.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { valkey } from "../app.js";
 
 const toggleVideoLike = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
@@ -11,6 +12,12 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
   const validity = isValidObjectId(videoId);
   if (!validity) {
     throw new ApiError(400, "Invalid Video Id for toggling Like");
+  }
+  // check if the video is present in the redis server or not
+  // if present delete it and toggle video like in the database
+  const videoCached=await valkey.get(videoId);
+  if(videoCached){
+    await valkey.del(videoId);
   }
   const video = await Like.findOne({ video: videoId, likedBy: req.user._id });
   if (!video) {
@@ -49,6 +56,12 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
   const validity = isValidObjectId(commentId);
   if (!validity) {
     throw new ApiError(400, "Invalid comment Id for toggling like on comment");
+  }
+  // check if the comment is pressent in the redis server or not
+  // if present delete it and toggle comment like in the database
+  const commentCached=await valkey.get(commentId);
+  if(commentCached){
+    await valkey.del(commentId);
   }
   const liked = await Like.findOne({
     comment: commentId,
@@ -93,6 +106,12 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
   const validity = isValidObjectId(tweetId);
   if (!validity) {
     throw new ApiError(400, "Invalid TweetId");
+  }
+  // check if the tweet is pressent in the redis server or not
+  // if present delete it and toggle tweet like in the database
+  const tweetCached=await valkey.get(tweetId);
+  if(tweetCached){
+    await valkey.del(tweetId);
   }
   const liked = await Like.findOne({ tweet: tweetId, likedBy: req.user._id });
   if (!liked) {
