@@ -1,8 +1,16 @@
+version: '1.0'
 services:
   backend:
-    image: backend
+    image: ridhikajoshi/videotweets
     ports:
-      - "8000:8000"
+      - "4321:4321"
     env_file: ".env"
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
 
       
